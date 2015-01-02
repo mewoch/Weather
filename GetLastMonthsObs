@@ -1,0 +1,125 @@
+#!/bin/sh
+#
+# This script collects daily last month's daily weather obsernations
+# for a given Australian BOM station.
+#
+# usage : ./GetLastMonthsObs.sh
+#
+# Depends: wget
+
+
+error ()
+{
+    echo "$@" 1>&2
+    usage_and_exit 1
+}
+
+ 
+usage ()
+{
+    echo "Usage: $PROGRAM [--help] [--?] [--version]"
+}
+
+usage_and_exit () 
+{
+    usage
+    exit $1
+}
+
+version ()
+{
+    echo "$PROGRAM version $VERSION"
+}
+
+failure ()
+{
+    #uncomment this function below if you need to see what the\
+    # variables are really doing
+    printf "    $PROGRAM version $VERSION
+    OS : $os
+    Year : $yr
+    Current month : $month
+    Previous month : $lm
+    Month length : $count \n"
+}
+
+
+darwin()
+{
+    #If yau don't have a very current OSX then you'll need to get wget
+    #depending on how you do this it might end up in somewhere other 
+    #than /usr/bin
+
+    OLDPATH=$PATH
+
+    os=`uname`
+
+    if [ $os = 'Darwin' ]
+     then PATH=/bin:/usr/bin:/usr/local/bin
+     else PATH=/bin:/usr/bin
+    fi
+
+    export PATH
+}
+
+#pass command line options
+while test $# -gt 0
+do
+    case $1 in
+    --help | --hel | --he | --h | --? | -? | -h | -he | -hel | -help )
+        usage_and_exit 0
+	;;
+    --version | --versio | --versi | --vers | --ver | --ve | --v | \
+    -version | -versio | -versi | -vers | -ver | -ve | -v )
+        version
+	exit 0
+	;;
+    --debug | --debu | --deb | --de | --d | -debug | -debu | -deb \
+    | -de | -d )
+       failure
+       exit 2
+       ;;
+    -*)
+        error "Unrecognised option: $1"
+	;;
+    *)
+	break
+	;;
+    esac
+    shift
+done
+
+
+#Defining some variables
+PROGRAM=`basename $0`
+VERSION=0.1
+
+station=IDCJDW6061
+#see this list: https://www.seegrid.csiro.au/subversion/ASRDC/BOM/SIMS/data/anzlic_20110825.txt for numbers.
+
+darwin
+
+#get this month
+month=`date +%m`  #Comment this line for testing different months
+#month=06         #Uncomment this line for testing different months
+
+#get this year
+yr=`date +%Y`
+
+#If month 01, then last month is 12 not 0
+if [ $month = '01' ]
+ then lm=12  yr=`expr $yr - 1`
+ else lm=`expr $month - 1`
+fi
+
+#We need 07 not just plain 7
+count=${#lm}
+
+if [ $count = 1 ]
+ then lm=0$lm
+fi
+
+#Uncomment the line below for testing purposes
+#failure
+
+wget http://www.bom.gov.au/climate/dwo/$yr${lm}/text/${station}.$yr${lm}.csv
