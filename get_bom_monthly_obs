@@ -60,12 +60,21 @@ failure ()
     First month back : $n
     Last month back : $m
     Last-First month : $delta
-    Prev : $pm    
     Month-Months back : $mpm
+    First Previous Month : $lm_start
     Previous month : $lm
     Month length : $count \n"
 }
 
+pad ()
+{
+#We need 07 not just plain 7
+count=${#lm}
+
+if [ $count = 1 ]
+ then lm=0$lm
+fi
+}
 
 darwin()
 {
@@ -174,15 +183,26 @@ if [ $mpm -le 0 ] && [ $mpm = '-12' ]
       lm=12
 fi
 
-#We need 07 not just plain 7
-count=${#lm}
-
-if [ $count = 1 ]
- then lm=0$lm
-fi
+##make sure the month is 2 digits long
+pad
 
 #Uncomment the line below for testing purposes
-failure
+lm_start=$lm           #for testing purposes
+#failure
 
 #need to build loop here
-#wget http://www.bom.gov.au/climate/dwo/$yr${lm}/text/${station}.$yr${lm}.csv
+while [ $delta -ge '0' ]
+ do
+ wget http://www.bom.gov.au/climate/dwo/$yr${lm}/text/${station}.$yr${lm}.csv
+ delta=`expr $delta - 1`
+ lm=`expr $lm - 1`
+#eventually we get to Jan ($lm=1), and we need to jump to Dec (lm=12)
+# in the previous year
+ if [ $lm = 0 ]
+  then lm=12
+       yr=`expr $yr - 1`
+fi
+pad
+#uncomment the line below for testing purposes
+failure
+done
