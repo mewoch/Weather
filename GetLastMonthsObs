@@ -5,18 +5,19 @@
 #
 # For any station the BOM makes available the current month 
 # and the previous 13 month's data.
-# Therefore n can be between 0 and 13.
+# Therefore n and m can be between 0 and 13.
 #
-# The default is n=1, ie. last months data.
+# The default is n=1, m=1; ie. only last months data.
 #
-# usage : ./GetLastMonthsObs.sh --help --? --version n
-#         n is the month to collect, between 0 and 13 months ago.
+# usage : ./GetLastMonthsObs.sh --help --? --version n m
+#         n is the first month, and m is the last month to collect.
+#         n and m can be between 0 and 13 months ago.
 #
 # Depends: wget
 
 #Defining some variables
 PROGRAM=`basename $0`
-VERSION=0.2
+VERSION=0.2.1
 
 station=IDCJDW6061
 #see this list: https://www.seegrid.csiro.au/subversion/ASRDC/BOM/SIMS/data/anzlic_20110825.txt for numbers.
@@ -31,8 +32,9 @@ error ()
 usage ()
 {
     printf "Usage: $PROGRAM [--help] [--?] [--version] n
-         Where n is the month to collect, between 0 and 13 months ago.
-         The default is 1 (last month). \n"
+         Where n is the first month and m is the last month to collect.
+	 n and m can be between 0 and 13 months ago.
+         The default case is 1 (last month). \n"
 }
 
 usage_and_exit () 
@@ -51,11 +53,14 @@ failure ()
     #uncomment this function below if you need to see what the\
     # variables are really doing
     printf "    $PROGRAM version $VERSION
-    Options : $@
+    Options : $options
     OS : $os
     Year : $yr
     Current month : $month
-    Months back : $pm    
+    First month back : $n
+    Last month back : $m
+    Last-First month : $delta
+    Prev : $pm    
     Month-Months back : $mpm
     Previous month : $lm
     Month length : $count \n"
@@ -81,6 +86,7 @@ darwin()
 }
 
 #pass command line options
+options=$@		#for testing purposes only
 while test $# -gt 0
 do
     case $1 in
@@ -107,6 +113,8 @@ do
     shift
 done
 
+IFS='
+	 '
 darwin
 
 #get this month
@@ -116,26 +124,46 @@ month=`date +%m`  #Comment this line for testing different months
 #get this year
 yr=`date +%Y`
 
-#how many months ago?
-#sanity check on n
-## is there anything to check? and is it in bounds (0-13)
-n=$@
+#inital state for n and m
+n=1
+m=1
 
-if [ -n "$n" ]
- then if [ $n -ge '0' ] && [ $n -le '13' ]
-       then pm=$n
-       else usage_and_exit 1 
-      fi 
- else pm=1
+#sanity check
+## are there different months to check?
+if [ $# -gt 0 ]
+ then
+##is n in bounds (0-13)?
+  if [ $1 -lt '0' ] || [ $1 -gt '13' ]
+   then error "First month not between 0 and 13"
+        usage_and_exit 1
+   else n=$1
+  fi
+fi
+##is m in bounds (0-13)?
+if [ ${#2} -gt 0 ]
+ then
+  if [ $2 -lt '0' ] || [ $2 -gt '13' ]
+   then error "Last month not between 0 and 13"
+        usage_and_exit 1
+   else m=$2
+  fi
+ else m=$n
+fi
+##is n>m?
+###this becomes the counter for loop
+delta=`expr $m - $n`
+if [ $delta -lt 0 ]
+ then error "First month bigger than last month"
+      usage_and_exit 2
 fi
 
 #Adjust years and bits for $month-$pm
-mpm=`expr $month - $pm`
-#echo $mpm
-#The month you want is this year
+mpm=`expr $month - $n`
+
+##The month you want is this year
 lm=$month
 
-#The month you want is last year
+##The month you want is last year
 if [ $mpm -le '0' ] && [ $mpm != '-12' ]
  then yr=`expr $yr - 1`
       lm=`expr $mpm + 12`
@@ -146,13 +174,6 @@ if [ $mpm -le 0 ] && [ $mpm = '-12' ]
       lm=12
 fi
 
-#old bits
-#If month 01, then last month is 12 not 0
-#if [ $month = '01' ]
-# then lm=12  yr=`expr $yr - 1`
-# else lm=`expr $month - 1`
-#fi
-
 #We need 07 not just plain 7
 count=${#lm}
 
@@ -161,6 +182,7 @@ if [ $count = 1 ]
 fi
 
 #Uncomment the line below for testing purposes
-#failure
+failure
 
-wget http://www.bom.gov.au/climate/dwo/$yr${lm}/text/${station}.$yr${lm}.csv
+#need to build loop here
+#wget http://www.bom.gov.au/climate/dwo/$yr${lm}/text/${station}.$yr${lm}.csv
