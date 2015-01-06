@@ -7,7 +7,7 @@
 # and the previous 13 month's data.
 # Therefore n and m can be between 0 and 13.
 #
-# The default is n=1, m=1; ie. only last months data.
+# The default is n=1, m=1; ie. only last month's data.
 #
 # usage : ./GetLastMonthsObs.sh --help --? --version n m
 #         n is the first month, and m is the last month to collect.
@@ -17,10 +17,13 @@
 
 #Defining some variables
 PROGRAM=`basename $0`
-VERSION=0.2.1
+VERSION=0.3.0
 
 station=IDCJDW6061
-#see this list: https://www.seegrid.csiro.au/subversion/ASRDC/BOM/SIMS/data/anzlic_20110825.txt for numbers.
+# see this list:
+# https://www.seegrid.csiro.au/subversion/ASRDC/BOM/SIMS/data/anzlic_20110825.txt
+# for numbers or the "Recent Months" link off your local station's
+# observations page.
 
 error ()
 {

@@ -1,0 +1,23 @@
+get_bom_monthly_obs
+===================
+
+usage : ./GetLastMonthsObs.sh --help --? --version n m
+
+This script collects a month's daily weather obsernations
+for a given Australian BOM station.
+
+For example, if the variable station was set to IDCJDW5003
+the script will download data for Andamooka. Or you can do it
+manualy
+http://www.bom.gov.au/climate/dwo/IDCJDW5003.latest.shtml
+under the "Other times and places" header.
+
+For any station the BOM makes available the current month 
+and the previous 13 month's data.
+
+n is the first month, and m is the last month to collect.
+Therefore n and m can be between 0 and 13 months ago.
+
+The default is n=1, m=1; ie. only last month's data.
+
+Depends: wget
